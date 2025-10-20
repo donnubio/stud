@@ -68,14 +68,14 @@ def Spectrogram(t,y,
   S_pow = S**2
   # convert to dB
   S_pow_db = librosa.power_to_db(S_pow, ref=np.max)
-  if mod == 'amp':
+  if mode == 'amp':
     S_res = S
-  elif mod == 'pow':
+  elif mode == 'pow':
     S_res = S_pow
-  elif mod == 'powdb':
+  elif mode == 'powdb':
     S_res = S_pow_db
   else:
-    print('mod error')
+    print('mode error')
     return
     
   # time for each frame
