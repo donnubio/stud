@@ -43,7 +43,8 @@ def Spectrogram(t,y,
                 plot_spectrogram=True,
                 pallete='Viridis256', 
                 width=1000, height=300,
-                n_fft=1024, hop_length=512):
+                n_fft=1024, hop_length=512,
+                mode='powdb'): 
   '''
   calculate and plot spectrogram.
   Parameters:
@@ -53,20 +54,32 @@ def Spectrogram(t,y,
   pallete: color pallete (e.g. 'Viridis256','Plasma256','Inferno256','Rainbow256','Magma256')
   width, height: plot size
   n_fft, hop_length: parameters for STFT
+  mode: 'amp', 'pow', 'powdb'
   Returns:
-  times, freqs, S_db: time, frequency, spectrogram
+  times, freqs, S_res: time, frequency, spectrogram
   '''
   # assume uniform spacing
   dt = t[1] - t[0]
   sr = 1.0 / dt
   # STFT
   S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
+  S = np.abs(S)                
   # magnitude spectrogram (power)
-  S_power = np.abs(S)**2
+  S_pow = S**2
   # convert to dB
-  S_db = librosa.power_to_db(S_power, ref=np.max)
+  S_pow_db = librosa.power_to_db(S_pow, ref=np.max)
+  if mod == 'amp':
+    S_res = S
+  elif mod == 'pow':
+    S_res = S_pow
+  elif mod == 'powdb':
+    S_res = S_pow_db
+  else:
+    print('mod error')
+    return
+    
   # time for each frame
-  times = librosa.frames_to_time(np.arange(S_db.shape[1]),
+  times = librosa.frames_to_time(np.arange(S_res.shape[1]),
                                 sr=sr,
                                 hop_length=hop_length)
   # frequency for each FFT bin
@@ -75,8 +88,8 @@ def Spectrogram(t,y,
   if plot_spectrogram:
     # set up color mapper
     color_mapper = LinearColorMapper(palette=pallete,
-                                    low=S_db.min(),
-                                    high=S_db.max())
+                                    low=S_res.min(),
+                                    high=S_res.max())
 
     # create figure
     p = figure(width=width, height=height,
@@ -88,7 +101,7 @@ def Spectrogram(t,y,
 
 
     # draw the spectrogram
-    p.image(image=[S_db],
+    p.image(image=[S_res],
             x=times.min(),
             y=freqs.min(),
             dw=times.max() - times.min(),
@@ -103,4 +116,4 @@ def Spectrogram(t,y,
 
     show(p)  
   else:  
-    return (times, freqs, S_db)
+    return (times, freqs, S_res)
